@@ -1,4 +1,6 @@
-![Interface Principal](image/logo.png)
+<p align="center"> 
+<img src="image/logo.png">
+</p>
 
 ![Linux](https://img.shields.io/badge/-Linux-grey?logo=linux)
 ![Bash](https://img.shields.io/badge/Bash-v4.4%5E-green?logo=GNU%20bash)
