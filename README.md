@@ -1,5 +1,6 @@
 ![Interface Principal](image/logo.png)
 
+![Go](https://img.shields.io/badge/Go-v1.14.6-blue)
 
 # Lift0ff
 
