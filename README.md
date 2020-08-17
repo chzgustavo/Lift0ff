@@ -14,7 +14,7 @@
 
 # Lift0ff
 
-**Lift0ff** es una aplicación binaria que permite conocer métricas del sistema como: memoria, procesos, puertos y información del sistema en Linux.
+**Lift0ff** es una aplicación binaria que permite conocer métricas del sistema como: memoria ram, memoria disco, procesos, puertos e información general del sistema operativo Linux.
 
 
 ## Screenshots
@@ -22,14 +22,32 @@
 Ejecución con banderas `--help`, `--info` y `mem`
 ![Screenshot 1](image/image1.png)
 
-Ejecución con bandera `processes`
+Ejecución con bandera `proce`
 ![Screenshot 2](image/image2.png)
 
 Ejecución con bandera `port`
 ![Screenshot 3](image/image3.png)
 
 
-## Herramientas utilizadas
+## Dependencias
 Las dependencias con las que cuenta Lift0ff son:
-- [x] Add1
-- [x] Add2
+- [x] Golang, se provo con la versión ***go1.14.6 linux/amd64***. Puede descargar **[Go](https://golang.org/dl/)** 
+- [x] bash (v4.4 o posterior), se provo en la versión 4.4.20 y no hubo inconvenientes. Verificar versión: ***bash --version***
+- [x] Tener instalado binario disk free(df), necesario para mostrar los datos de memoria disco. Verificar binario instalado: ***which df***
+- [x] **who**, necesario para mostrar datos de inicio de Pc. Verificar binario instalado: ***which who*** 
+- [x] Table of processes **top**, necesario para mostrar los procesos activos Pc. Verificar binario instalado: ***which top*** 
+- [x] Process Status **ps**, necesario para mostrar los procesos activos Pc. Verificar binario instalado: ***which ps***
+- [x] List Of Open File **lsof**, necesario para mostrar los puertos de Pc. Verificar binario instalado: ***which lsof***
+- [x] Directorio **/proc** para recopilar datos
+
+
+## Instalación y Ejecución
+
+Instale Go si aún no lo ha hecho.
+Descargue el repositorio y en el directorio source ejecute:
+
+```go build Lift0ff.go```
+
+### Ejecución aplicación:
+
+```./liftoff [OPTIONS] COMMAND```

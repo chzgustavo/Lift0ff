@@ -156,8 +156,31 @@ func memInfo(mem string) float64 {
 	return m1
 }
 
-func main() {
+func memDisk() (string, string, string, string) {
+	m1, m2, m3, m4, m5, m6 := "", "", "", "", "", ""
+	cmd := exec.Command("df", "-h")
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		fmt.Println(err)
+	}
+	if err := cmd.Start(); err != nil {
+		fmt.Println(err)
+	}
+	scanner := bufio.NewScanner(stdout)
+	for scanner.Scan() {
+		_, error := fmt.Sscanf(scanner.Text(), "%s %s %s %s %s %s", &m1, &m2, &m3, &m4, &m5, &m6)
+		if error != nil {
+			//panic(error)
+			fmt.Println(error)
+		}
+		if m6 == "/" {
+			break
+		}
+	}
+	return m2, m3, m4, m5
+}
 
+func main() {
 	argsConProg := os.Args
 	if len(argsConProg) == 1 {
 		fmt.Println("Error, ejecute  liftoff --help, para ver comando habilitados")
@@ -167,13 +190,15 @@ func main() {
 	switch stSentencia := strings.Join(sentencia, " "); stSentencia {
 	case "-h", "--help":
 		fmt.Println("\nUsage:	./liftoff [OPTIONS] COMMAND")
-		fmt.Println("\nOptions: \n")
-		fmt.Println("-v, --version			Imprime la version de liftoff")
-		fmt.Println("-i, --info			Muestra informacion del sistema")
-		fmt.Println("mem				Muestra informacion de memoria del sistema")
-		fmt.Println("port				Muestra puertos TCP y UDP (LISTEN, ESTABLISHED)")
-		fmt.Println("-t processes			Muestra los procesos del sistema actualizados cada 5 segundos en tiempo real. Finalizar con Ctrl + c")
-		fmt.Println("processes			Muestra los procesos del sistema de manera estatica")
+		fmt.Println("\nOptions:")
+		fmt.Println("	-v, --version			Imprime la version de liftoff")
+		fmt.Println("	-i, --info			Muestra información del sistema")
+		fmt.Println("\nCommands:")
+		fmt.Println("	ram				Muestra información de memoria RAM")
+		fmt.Println("	mem				Muestra información de memoria Disco")
+		fmt.Println("	port				Muestra puertos TCP y UDP (LISTEN, ESTABLISHED)")
+		fmt.Println("	proct			    	Muestra procesos del sistema actualizados cada 5 segundos en tiempo real. Finalizar con Ctrl + c")
+		fmt.Println("	proce			    	Muestra los procesos del sistema de manera estatica")
 	case "-v", "--version":
 		fmt.Println(" _        _    __   _              __    __  ")
 		fmt.Println("| |      (_)  / _| | |            / _|  / _| ")
@@ -181,7 +206,7 @@ func main() {
 		fmt.Println("| |      | | |  _| | __|  / _  ) |  _| |  _| ")
 		fmt.Println("| |____  | | | |   | |_  | (_) | | |   | |   ")
 		fmt.Println("|______| |_| |_|   |___| (____/  |_|   |_|   ")
-		fmt.Println("                                            Version 1.0 build beta")
+		fmt.Println("                                            Version 1.0.0 beta")
 	case "-i", "--info":
 		fmt.Println("Informacion del Sistema\n")
 		fmt.Println("       Fecha y Hora RTC:", simpleData("/proc/driver/rtc", "rtc_date"), simpleData("/proc/driver/rtc", "rtc_time"))
@@ -199,8 +224,8 @@ func main() {
 		fmt.Printf("       Tiempo activo So: %vd :%vh :%vm :%vs \n", dias, horas, minutos, segundos)
 		f1, f2 := fechaInicioSistema(exec.Command("who", "-b"))
 		fmt.Println("	 Inicio sistema:", f1, f2)
-	case "mem":
-		fmt.Println("\nMemoria RAM Sistema Operativo\n")
+	case "ram":
+		fmt.Println("\nMemoria RAM\n")
 		fmt.Println("Memory:")
 		memTotal := memInfo("MemTotal:")
 		memAvailable := memInfo("MemAvailable:")
@@ -215,9 +240,17 @@ func main() {
 		fmt.Println("     Total Swap:", math.Round(memTotalSwap*0.000001*100)/100, "GiB")
 		fmt.Println("      Swap Used:", math.Round((memTotalSwap-memSwapFree)*0.000001*100)/100, "GiB")
 		fmt.Println("      Swap Free:", math.Round(memSwapFree*0.000001*100)/100, "GiB")
-	case "-t processes":
+	case "mem":
+		m1, m2, m3, m4 := memDisk()
+		fmt.Println("\nMemoria Disco\n")
+		fmt.Println("Memory:")
+		fmt.Println("    Memory Total:", m1)
+		fmt.Println("     Memory Used:", m2)
+		fmt.Println("Memory Available:", m3)
+		fmt.Println(" percentage used:", m4)
+	case "proct":
 		execComand(exec.Command("top", "-d", "5"))
-	case "processes":
+	case "proce":
 		execComand(exec.Command("ps", "aux"))
 	case "port":
 		execComand(exec.Command("sudo", "lsof", "-i", "-P"))
