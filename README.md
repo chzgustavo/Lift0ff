@@ -1,11 +1,16 @@
 <p align="center"> 
 <img src="image/logo.png">
 </p>
-
-![Linux](https://img.shields.io/badge/-Linux-grey?logo=linux)
-![Bash](https://img.shields.io/badge/Bash-v4.4%5E-green?logo=GNU%20bash)
-![Go](https://img.shields.io/badge/Go-v1.14.6-blue)
-![Version](https://img.shields.io/badge/version-v1.0.0-informational)
+<p align="center">
+    <a href="https://img.shields.io/badge/-Linux-grey?logo=linux" alt="Linux">
+        <img src="https://img.shields.io/badge/-Linux-grey?logo=linux" /></a>
+    <a href="https://img.shields.io/badge/Bash-v4.4%5E-green?logo=GNU%20bash" alt="Bash">
+        <img src="https://img.shields.io/badge/Bash-v4.4%5E-green?logo=GNU%20bash" /></a>
+    <a href="https://img.shields.io/badge/Go-v1.14.6-blue" alt="Go">
+        <img src="https://img.shields.io/badge/Go-v1.14.6-blue" /></a>
+    <a href="https://img.shields.io/badge/version-v1.0.0-informational" alt="Version">
+        <img src="https://img.shields.io/badge/version-v1.0.0-informational" /></a>
+</p>
 
 # Lift0ff
 
