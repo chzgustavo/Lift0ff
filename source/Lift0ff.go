@@ -2,11 +2,17 @@ package main
 
 import (
 	"bufio"
+	"container/list"
 	"fmt"
 	"math"
 	"os"
 	"os/exec"
+	"reflect"
+	"regexp"
 	"strings"
+
+	"github.com/fatih/color"
+	"github.com/rodaine/table"
 )
 
 func execComand(com *exec.Cmd) {
@@ -180,6 +186,48 @@ func memDisk() (string, string, string, string) {
 	return m2, m3, m4, m5
 }
 
+func networkData() *list.List {
+	n1, n2, n3, n4, n5, n6, n7, n8 := "", "", "", "", "", "", "", ""
+	listaRed := list.New()
+	red := make([]string, 9)
+	file, err := os.Open("/proc/net/dev")
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+	for i := 0; scanner.Scan() == true; i++ {
+		if i > 1 {
+			ndata := strings.TrimSpace(scanner.Text())
+			space := regexp.MustCompile(`\s+`)
+			noSpaces := space.ReplaceAllString(ndata, " ")
+			netData := strings.Split(noSpaces, " ")
+
+			interfaz := netData[0:1]
+			download := netData[1:5]
+			upload := netData[9:13]
+
+			intfz := strings.Join(interfaz, "")
+			intfz = intfz[:len(intfz)-1]
+			downl := strings.Join(download, " ")
+			upl := strings.Join(upload, " ")
+
+			_, er1 := fmt.Sscanf(downl, "%s %s %s %s", &n1, &n2, &n3, &n4)
+			if er1 != nil {
+				fmt.Println(er1)
+			}
+			_, er2 := fmt.Sscanf(upl, "%s %s %s %s", &n5, &n6, &n7, &n8)
+			if er2 != nil {
+				fmt.Println(er2)
+			}
+			red[0], red[1], red[2], red[3], red[4], red[5], red[6], red[7], red[8] = intfz, n1, n2, n3, n4, n5, n6, n7, n8
+			listaRed.PushBack(red)
+			red = []string{"", "", "", "", "", "", "", "", ""}
+		}
+	}
+	return listaRed
+}
+
 func main() {
 	argsConProg := os.Args
 	if len(argsConProg) == 1 {
@@ -191,22 +239,15 @@ func main() {
 	case "-h", "--help":
 		fmt.Println("\nUsage:	./liftoff [OPTIONS] COMMAND")
 		fmt.Println("\nOptions:")
-		fmt.Println("	-v, --version			Imprime la version de liftoff")
 		fmt.Println("	-i, --info			Muestra información del sistema")
+		fmt.Println("	-v, --version			Imprime la version de liftoff")
 		fmt.Println("\nCommands:")
-		fmt.Println("	ram				Muestra información de memoria RAM")
 		fmt.Println("	mem				Muestra información de memoria Disco")
 		fmt.Println("	port				Muestra puertos TCP y UDP (LISTEN, ESTABLISHED)")
-		fmt.Println("	proct			    	Muestra procesos del sistema actualizados cada 5 segundos en tiempo real. Finalizar con Ctrl + c")
 		fmt.Println("	proce			    	Muestra los procesos del sistema de manera estatica")
-	case "-v", "--version":
-		fmt.Println(" _        _    __   _              __    __  ")
-		fmt.Println("| |      (_)  / _| | |            / _|  / _| ")
-		fmt.Println("| |       _  | |_  | |_    ____  | |_  | |_  ")
-		fmt.Println("| |      | | |  _| | __|  / _  ) |  _| |  _| ")
-		fmt.Println("| |____  | | | |   | |_  | (_) | | |   | |   ")
-		fmt.Println("|______| |_| |_|   |___| (____/  |_|   |_|   ")
-		fmt.Println("                                            Version 1.0.0 beta")
+		fmt.Println("	proct			    	Muestra procesos del sistema actualizados cada 5 segundos en tiempo real. Finalizar con Ctrl + c")
+		fmt.Println("	ram				Muestra información de memoria RAM")
+		fmt.Println("	red				Muestra datos recibidos y transmitidos en la Red\n")
 	case "-i", "--info":
 		fmt.Println("Informacion del Sistema\n")
 		fmt.Println("       Fecha y Hora RTC:", simpleData("/proc/driver/rtc", "rtc_date"), simpleData("/proc/driver/rtc", "rtc_time"))
@@ -223,7 +264,33 @@ func main() {
 		segundos := int(((((tA / 3600) - float64(horas)) * 60) - float64(minutos)) * 60)
 		fmt.Printf("       Tiempo activo So: %vd :%vh :%vm :%vs \n", dias, horas, minutos, segundos)
 		f1, f2 := fechaInicioSistema(exec.Command("who", "-b"))
-		fmt.Println("	 Inicio sistema:", f1, f2)
+		fmt.Printf("	 Inicio sistema: %s %s\n\n", f1, f2)
+	case "-v", "--version":
+		fmt.Println()
+		fmt.Println(" _        _    __   _              __    __  ")
+		fmt.Println("| |      (_)  / _| | |            / _|  / _| ")
+		fmt.Println("| |       _  | |_  | |_    ____  | |_  | |_  ")
+		fmt.Println("| |      | | |  _| | __|  / _  ) |  _| |  _| ")
+		fmt.Println("| |____  | | | |   | |_  | (_) | | |   | |   ")
+		fmt.Println("|______| |_| |_|   |___| (____/  |_|   |_|   ")
+		fmt.Println("                                            Version 1.0.0 beta\n")
+	case "mem":
+		m1, m2, m3, m4 := memDisk()
+		fmt.Println("\nMemoria Disco\n")
+		fmt.Println("Memory:")
+		fmt.Println("    Memory Total:", m1)
+		fmt.Println("     Memory Used:", m2)
+		fmt.Println("Memory Available:", m3)
+		fmt.Printf(" percentage used: %s\n\n", m4)
+	case "port":
+		execComand(exec.Command("sudo", "lsof", "-i", "-P"))
+		fmt.Println()
+	case "proct":
+		execComand(exec.Command("top", "-d", "5"))
+		fmt.Println()
+	case "proce":
+		execComand(exec.Command("ps", "aux"))
+		fmt.Println()
 	case "ram":
 		fmt.Println("\nMemoria RAM\n")
 		fmt.Println("Memory:")
@@ -239,21 +306,30 @@ func main() {
 		memSwapFree := memInfo("SwapFree:")
 		fmt.Println("     Total Swap:", math.Round(memTotalSwap*0.000001*100)/100, "GiB")
 		fmt.Println("      Swap Used:", math.Round((memTotalSwap-memSwapFree)*0.000001*100)/100, "GiB")
-		fmt.Println("      Swap Free:", math.Round(memSwapFree*0.000001*100)/100, "GiB")
-	case "mem":
-		m1, m2, m3, m4 := memDisk()
-		fmt.Println("\nMemoria Disco\n")
-		fmt.Println("Memory:")
-		fmt.Println("    Memory Total:", m1)
-		fmt.Println("     Memory Used:", m2)
-		fmt.Println("Memory Available:", m3)
-		fmt.Println(" percentage used:", m4)
-	case "proct":
-		execComand(exec.Command("top", "-d", "5"))
-	case "proce":
-		execComand(exec.Command("ps", "aux"))
-	case "port":
-		execComand(exec.Command("sudo", "lsof", "-i", "-P"))
+		fmt.Println("      Swap Free:", math.Round(memSwapFree*0.000001*100)/100, "GiB", "\n")
+	case "red":
+		fmt.Println("\nDatos de Red\n")
+		fmt.Println("Datos Recibidos:")
+
+		headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
+		columnFmt := color.New(color.FgHiRed).SprintfFunc()
+
+		tbld := table.New("Interface", "bytes", "packets", "errs", "drop")
+		tbld.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
+
+		tblu := table.New("Interface", "bytes", "packets", "errs", "drop")
+		tblu.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
+
+		listaRed := networkData()
+		for temp := listaRed.Front(); temp != nil; temp = temp.Next() {
+			s := reflect.ValueOf(temp.Value)
+			tbld.AddRow(s.Index(0), s.Index(1), s.Index(2), s.Index(3), s.Index(4))
+			tblu.AddRow(s.Index(0), s.Index(5), s.Index(6), s.Index(7), s.Index(8))
+		}
+		tbld.Print()
+		fmt.Println("\nDatos Transmitidos:")
+		tblu.Print()
+		fmt.Println()
 	default:
 		fmt.Println("\n	Ejecute ./liftoff --help, para ver los comandos validos\n")
 	}
