@@ -14,12 +14,12 @@
 
 # Lift0ff
 
-**Lift0ff** es una aplicación binaria que permite conocer métricas del sistema como: memoria ram, memoria disco, procesos, puertos, datos de la red e información en general del sistema operativo Linux.
+**Lift0ff** es una aplicación binaria que permite conocer métricas del sistema como: memoria ram, memoria disco, procesos, puertos, datos de red, porcentajes de cpu e información en general del sistema operativo Linux.
 
 
 ## Screenshots
 
-Ejecución con banderas `--help`, `--info` y `mem`
+Ejecución con banderas `--help`, `--info` y `processor`
 ![Screenshot 1](image/image1.png)
 
 Ejecución con bandera `proce`
@@ -40,6 +40,7 @@ Las dependencias con las que cuenta Lift0ff son:
 - [x] List Of Open File **lsof**, necesario para mostrar los puertos de Pc. Verificar binario instalado: ***which lsof***
 - [x] Directorio **/proc** para recopilar datos
 - [x] Instalar paquetes de Go para mostrar tablas: ***go get github.com/rodaine/table*** y ***go get github.com/fatih/color***
+- [x] Instalar paquetes de Go para mostrar porcentaje de cpu: ***go get github.com/shirou/gopsutil/cpu***. COnsultar al repositorio: [gopsutil](https://github.com/shirou/gopsutil) 
  
 
 ## Instalación y Ejecución

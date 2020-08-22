@@ -9,10 +9,13 @@ import (
 	"os/exec"
 	"reflect"
 	"regexp"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/rodaine/table"
+	"github.com/shirou/gopsutil/cpu"
 )
 
 func execComand(com *exec.Cmd) {
@@ -228,6 +231,137 @@ func networkData() *list.List {
 	return listaRed
 }
 
+func help() {
+	fmt.Println("\nUsage:	./liftoff [OPTIONS] COMMAND")
+	fmt.Println("\nOptions:")
+	fmt.Println("	-i, --info			Muestra información del sistema")
+	fmt.Println("	-v, --version			Imprime la version de liftoff")
+	fmt.Println("\nCommands:")
+	fmt.Println("	mem				Muestra información de memoria Disco")
+	fmt.Println("	port				Muestra puertos TCP y UDP (LISTEN, ESTABLISHED)")
+	fmt.Println("	processor			Muestra los porcentajes del procesador")
+	fmt.Println("	proce			    	Muestra los procesos del sistema de manera estatica")
+	fmt.Println("	proct			    	Muestra procesos del sistema actualizados cada 5 segundos en tiempo real. Finalizar con Ctrl + c")
+	fmt.Println("	ram				Muestra información de memoria RAM")
+	fmt.Println("	red				Muestra datos recibidos y transmitidos en la Red\n")
+}
+func info() {
+	fmt.Println("\nInformacion del Sistema\n")
+	fmt.Println("       Fecha y Hora RTC:", simpleData("/proc/driver/rtc", "rtc_date"), simpleData("/proc/driver/rtc", "rtc_time"))
+	fmt.Println("	       Hostname:", singleData("/proc/sys/kernel/hostname"))
+	fmt.Println("  Fabricante Procesador:", simpleData("/proc/cpuinfo", "vendor_id"))
+	fmt.Println("      Modelo Procesador:", simpleData("/proc/cpuinfo", "model name"))
+	kv1, kv2 := kernelVersion("/proc/version")
+	fmt.Println("      Vesion del kernel:", kv1, kv2)
+	fmt.Println("	  Version de SO:", versionSo("/etc/os-release", "PRETTY_NAME"))
+	tA := tiempoActivoSo("/proc/uptime")
+	dias := int(tA / 86400)
+	horas := int((tA) / 3600)
+	minutos := int(((tA / 3600) - float64(horas)) * 60)
+	segundos := int(((((tA / 3600) - float64(horas)) * 60) - float64(minutos)) * 60)
+	fmt.Printf("       Tiempo activo So: %vd :%vh :%vm :%vs \n", dias, horas, minutos, segundos)
+	f1, f2 := fechaInicioSistema(exec.Command("who", "-b"))
+	fmt.Printf("	 Inicio sistema: %s %s\n\n", f1, f2)
+}
+
+func version() {
+	fmt.Println()
+	fmt.Println(" _        _    __   _              __    __  ")
+	fmt.Println("| |      (_)  / _| | |            / _|  / _| ")
+	fmt.Println("| |       _  | |_  | |_    ____  | |_  | |_  ")
+	fmt.Println("| |      | | |  _| | __|  / _  ) |  _| |  _| ")
+	fmt.Println("| |____  | | | |   | |_  | (_) | | |   | |   ")
+	fmt.Println("|______| |_| |_|   |___| (____/  |_|   |_|   ")
+	fmt.Println("                                            Version 1.0.0 beta\n")
+}
+
+func mem() {
+	m1, m2, m3, m4 := memDisk()
+	fmt.Println("\nMemoria Disco\n")
+	fmt.Println("Memory:")
+	fmt.Println("    Memory Total:", m1)
+	fmt.Println("     Memory Used:", m2)
+	fmt.Println("Memory Available:", m3)
+	fmt.Printf(" percentage used: %s\n\n", m4)
+}
+
+func port() {
+	execComand(exec.Command("sudo", "lsof", "-i", "-P"))
+	fmt.Println()
+}
+
+func processor() {
+	fmt.Println()
+	for i := 0; i < 5; i++ {
+		headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
+		columnFmt := color.New(color.FgHiRed).SprintfFunc()
+
+		tblp := table.New("CPU", "Porcentaje")
+		tblp.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
+		pCpu, _ := cpu.Percent(time.Second, false)
+		pCore, _ := cpu.Percent(1500*time.Millisecond, true)
+		tblp.AddRow("Cpu-Total", fmt.Sprintf("%.2f %%", pCpu[0]))
+		for i, core := range pCore {
+			tblp.AddRow("Cpu"+strconv.Itoa(i), fmt.Sprintf("%.2f %%", core))
+		}
+		tblp.Print()
+		fmt.Println()
+	}
+}
+
+func proct() {
+	execComand(exec.Command("top", "-d", "5"))
+	fmt.Println()
+}
+
+func proce() {
+	execComand(exec.Command("ps", "aux"))
+	fmt.Println()
+}
+
+func ram() {
+	fmt.Println("\nMemoria RAM\n")
+	fmt.Println("Memory:")
+	memTotal := memInfo("MemTotal:")
+	memAvailable := memInfo("MemAvailable:")
+	fmt.Println("    Memory Total:", math.Round(memTotal*0.000001*100)/100, "GiB")
+	fmt.Println("     Memory Used:", math.Round((memTotal-memAvailable)*0.000001*100)/100, "GiB")
+	fmt.Println("Memory Available:", math.Round(memAvailable*0.001*100)/100, "MiB")
+	fmt.Println("    Memory Cache:", math.Round(memInfo("Cached:")*0.001*100)/100, "MiB")
+	fmt.Println("     Memory Free:", math.Round(memInfo("MemFree:")*0.001*100)/100, "MiB")
+	fmt.Println("\nMemory Swap:")
+	memTotalSwap := memInfo("SwapTotal:")
+	memSwapFree := memInfo("SwapFree:")
+	fmt.Println("     Total Swap:", math.Round(memTotalSwap*0.000001*100)/100, "GiB")
+	fmt.Println("      Swap Used:", math.Round((memTotalSwap-memSwapFree)*0.000001*100)/100, "GiB")
+	fmt.Println("      Swap Free:", math.Round(memSwapFree*0.000001*100)/100, "GiB", "\n")
+}
+
+func red() {
+	fmt.Println("\nDatos de Red\n")
+	fmt.Println("Datos Recibidos:")
+
+	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
+	columnFmt := color.New(color.FgHiRed).SprintfFunc()
+
+	tbld := table.New("Interface", "bytes", "packets", "errs", "drop")
+	tbld.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
+
+	tblu := table.New("Interface", "bytes", "packets", "errs", "drop")
+	tblu.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
+
+	listaRed := networkData()
+	for temp := listaRed.Front(); temp != nil; temp = temp.Next() {
+		s := reflect.ValueOf(temp.Value)
+		tbld.AddRow(s.Index(0), s.Index(1), s.Index(2), s.Index(3), s.Index(4))
+		tblu.AddRow(s.Index(0), s.Index(5), s.Index(6), s.Index(7), s.Index(8))
+	}
+	tbld.Print()
+	fmt.Println("\nDatos Transmitidos:")
+	tblu.Print()
+	fmt.Println()
+}
+
 func main() {
 	argsConProg := os.Args
 	if len(argsConProg) == 1 {
@@ -237,99 +371,25 @@ func main() {
 	sentencia := os.Args[1:]
 	switch stSentencia := strings.Join(sentencia, " "); stSentencia {
 	case "-h", "--help":
-		fmt.Println("\nUsage:	./liftoff [OPTIONS] COMMAND")
-		fmt.Println("\nOptions:")
-		fmt.Println("	-i, --info			Muestra información del sistema")
-		fmt.Println("	-v, --version			Imprime la version de liftoff")
-		fmt.Println("\nCommands:")
-		fmt.Println("	mem				Muestra información de memoria Disco")
-		fmt.Println("	port				Muestra puertos TCP y UDP (LISTEN, ESTABLISHED)")
-		fmt.Println("	proce			    	Muestra los procesos del sistema de manera estatica")
-		fmt.Println("	proct			    	Muestra procesos del sistema actualizados cada 5 segundos en tiempo real. Finalizar con Ctrl + c")
-		fmt.Println("	ram				Muestra información de memoria RAM")
-		fmt.Println("	red				Muestra datos recibidos y transmitidos en la Red\n")
+		help()
 	case "-i", "--info":
-		fmt.Println("Informacion del Sistema\n")
-		fmt.Println("       Fecha y Hora RTC:", simpleData("/proc/driver/rtc", "rtc_date"), simpleData("/proc/driver/rtc", "rtc_time"))
-		fmt.Println("	       Hostname:", singleData("/proc/sys/kernel/hostname"))
-		fmt.Println("  Fabricante Procesador:", simpleData("/proc/cpuinfo", "vendor_id"))
-		fmt.Println("      Modelo Procesador:", simpleData("/proc/cpuinfo", "model name"))
-		kv1, kv2 := kernelVersion("/proc/version")
-		fmt.Println("      Vesion del kernel:", kv1, kv2)
-		fmt.Println("	  Version de SO:", versionSo("/etc/os-release", "PRETTY_NAME"))
-		tA := tiempoActivoSo("/proc/uptime")
-		dias := int(tA / 86400)
-		horas := int((tA) / 3600)
-		minutos := int(((tA / 3600) - float64(horas)) * 60)
-		segundos := int(((((tA / 3600) - float64(horas)) * 60) - float64(minutos)) * 60)
-		fmt.Printf("       Tiempo activo So: %vd :%vh :%vm :%vs \n", dias, horas, minutos, segundos)
-		f1, f2 := fechaInicioSistema(exec.Command("who", "-b"))
-		fmt.Printf("	 Inicio sistema: %s %s\n\n", f1, f2)
+		info()
 	case "-v", "--version":
-		fmt.Println()
-		fmt.Println(" _        _    __   _              __    __  ")
-		fmt.Println("| |      (_)  / _| | |            / _|  / _| ")
-		fmt.Println("| |       _  | |_  | |_    ____  | |_  | |_  ")
-		fmt.Println("| |      | | |  _| | __|  / _  ) |  _| |  _| ")
-		fmt.Println("| |____  | | | |   | |_  | (_) | | |   | |   ")
-		fmt.Println("|______| |_| |_|   |___| (____/  |_|   |_|   ")
-		fmt.Println("                                            Version 1.0.0 beta\n")
+		version()
 	case "mem":
-		m1, m2, m3, m4 := memDisk()
-		fmt.Println("\nMemoria Disco\n")
-		fmt.Println("Memory:")
-		fmt.Println("    Memory Total:", m1)
-		fmt.Println("     Memory Used:", m2)
-		fmt.Println("Memory Available:", m3)
-		fmt.Printf(" percentage used: %s\n\n", m4)
+		mem()
 	case "port":
-		execComand(exec.Command("sudo", "lsof", "-i", "-P"))
-		fmt.Println()
+		port()
+	case "processor":
+		processor()
 	case "proct":
-		execComand(exec.Command("top", "-d", "5"))
-		fmt.Println()
+		proct()
 	case "proce":
-		execComand(exec.Command("ps", "aux"))
-		fmt.Println()
+		proce()
 	case "ram":
-		fmt.Println("\nMemoria RAM\n")
-		fmt.Println("Memory:")
-		memTotal := memInfo("MemTotal:")
-		memAvailable := memInfo("MemAvailable:")
-		fmt.Println("    Memory Total:", math.Round(memTotal*0.000001*100)/100, "GiB")
-		fmt.Println("     Memory Used:", math.Round((memTotal-memAvailable)*0.000001*100)/100, "GiB")
-		fmt.Println("Memory Available:", math.Round(memAvailable*0.001*100)/100, "MiB")
-		fmt.Println("    Memory Cache:", math.Round(memInfo("Cached:")*0.001*100)/100, "MiB")
-		fmt.Println("     Memory Free:", math.Round(memInfo("MemFree:")*0.001*100)/100, "MiB")
-		fmt.Println("\nMemory Swap:")
-		memTotalSwap := memInfo("SwapTotal:")
-		memSwapFree := memInfo("SwapFree:")
-		fmt.Println("     Total Swap:", math.Round(memTotalSwap*0.000001*100)/100, "GiB")
-		fmt.Println("      Swap Used:", math.Round((memTotalSwap-memSwapFree)*0.000001*100)/100, "GiB")
-		fmt.Println("      Swap Free:", math.Round(memSwapFree*0.000001*100)/100, "GiB", "\n")
+		ram()
 	case "red":
-		fmt.Println("\nDatos de Red\n")
-		fmt.Println("Datos Recibidos:")
-
-		headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
-		columnFmt := color.New(color.FgHiRed).SprintfFunc()
-
-		tbld := table.New("Interface", "bytes", "packets", "errs", "drop")
-		tbld.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
-
-		tblu := table.New("Interface", "bytes", "packets", "errs", "drop")
-		tblu.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
-
-		listaRed := networkData()
-		for temp := listaRed.Front(); temp != nil; temp = temp.Next() {
-			s := reflect.ValueOf(temp.Value)
-			tbld.AddRow(s.Index(0), s.Index(1), s.Index(2), s.Index(3), s.Index(4))
-			tblu.AddRow(s.Index(0), s.Index(5), s.Index(6), s.Index(7), s.Index(8))
-		}
-		tbld.Print()
-		fmt.Println("\nDatos Transmitidos:")
-		tblu.Print()
-		fmt.Println()
+		red()
 	default:
 		fmt.Println("\n	Ejecute ./liftoff --help, para ver los comandos validos\n")
 	}
