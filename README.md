@@ -40,7 +40,7 @@ Las dependencias con las que cuenta Lift0ff son:
 - [x] List Of Open File **lsof**, necesario para mostrar los puertos de Pc. Verificar binario instalado: ***which lsof***
 - [x] Directorio **/proc** para recopilar datos
 - [x] Instalar paquetes de Go para mostrar tablas: ***go get github.com/rodaine/table*** y ***go get github.com/fatih/color***
-- [x] Instalar paquetes de Go para mostrar porcentaje de cpu: ***go get github.com/shirou/gopsutil/cpu***. Consultar al repositorio: **[gopsutil](https://github.com/shirou/gopsutil)** 
+- [x] Instalar paquete de Go para mostrar porcentaje de cpu: ***go get github.com/shirou/gopsutil/cpu***. Consultar al repositorio: **[gopsutil](https://github.com/shirou/gopsutil)** 
  
 
 ## Instalación y Ejecución
@@ -48,7 +48,7 @@ Las dependencias con las que cuenta Lift0ff son:
 Instale Go si aún no lo ha hecho.
 Descargue el repositorio y en el directorio source ejecute:
 
-```go build Lift0ff.go```
+```go build lift0ff.go```
 
 ### Ejecución aplicación:
 
