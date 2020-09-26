@@ -327,7 +327,7 @@ func version() {
 	fmt.Println("| |      | | |  _| | __|  / _  ) |  _| |  _| ")
 	fmt.Println("| |____  | | | |   | |_  | (_) | | |   | |   ")
 	fmt.Println("|______| |_| |_|   |___| (____/  |_|   |_|   ")
-	fmt.Println("                                            Version 1.0.0 beta\n")
+	fmt.Println("                                            Version Beta\n")
 }
 
 func mem() {
